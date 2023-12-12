@@ -2,6 +2,14 @@ package com.wnview.tensorflowlitestudy
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
+import android.widget.ImageView
+import org.opencv.android.Utils
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.MatOfFloat
+import org.opencv.imgproc.Imgproc
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -9,16 +17,20 @@ import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 class Classifier(private val context: Context) {
-
-    private var interpreter: Interpreter
+    private val interpreter: Interpreter
     private var modelInputWidth = 0
     private var modelInputHeight = 0
     private var modelInputChannel = 0
     private var modelOutputClasses = 0
 
     init {
-        val model = loadModel(MODEL_NAME)
+        val am = context.assets
+        val afd = am.openFd("cnn_model.tflite")
+        val fis = FileInputStream(afd.fileDescriptor)
+
+        val model = fis.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
         model.order(ByteOrder.nativeOrder())
+
         interpreter = Interpreter(model)
 
         initModelShape()
@@ -34,7 +46,6 @@ class Classifier(private val context: Context) {
         val outputTensor = interpreter.getOutputTensor(0)
         val outputShape = outputTensor.shape()
         modelOutputClasses = outputShape[1]
-
     }
 
     fun classify(bitmap: Bitmap) : Pair<Int, Float> {
@@ -44,21 +55,6 @@ class Classifier(private val context: Context) {
         interpreter.run(buffer, result)
 
         return argmax(result[0])
-    }
-
-    private fun argmax(array: FloatArray) : Pair<Int, Float> {
-        var argmax = 0
-        var max = array[0]
-
-        for(i in 1 until array.size) {
-            val f = array[i]
-            if (f > max) {
-                argmax = i
-                max = f
-            }
-        }
-
-        return Pair(argmax, max)
     }
 
     private fun resizeBitmap(bitmap: Bitmap) : Bitmap {
@@ -84,20 +80,12 @@ class Classifier(private val context: Context) {
         }
 
         return byteBuffer
+
     }
 
-    private fun loadModel(modelName: String) : ByteBuffer {
-        val am = context.assets
-        val afd = am.openFd(modelName)
-        val fis = FileInputStream(afd.fileDescriptor)
-        val fc = fis.channel
-        val startOffset = afd.startOffset
-        val declaredLength = afd.declaredLength
-        return fc.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-    }
-
-    companion object {
-        const val MODEL_NAME = "mlp_model.tflite"
+    private fun argmax(array: FloatArray) : Pair<Int, Float> {
+        val maxBy = array.withIndex().maxBy { it.value }
+        return Pair(maxBy.index, maxBy.value)
     }
 
     fun finish() {

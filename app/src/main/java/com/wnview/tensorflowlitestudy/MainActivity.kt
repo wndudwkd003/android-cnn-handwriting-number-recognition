@@ -3,7 +3,10 @@ package com.wnview.tensorflowlitestudy
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.wnview.tensorflowlitestudy.databinding.ActivityMainBinding
+import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {

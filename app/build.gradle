@@ -46,6 +46,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     implementation 'com.github.divyanshub024:AndroidDraw:v0.1'
+
     implementation "org.tensorflow:tensorflow-lite:2.8.0"
 
     implementation 'com.quickbirdstudios:opencv-contrib:4.5.3.0'
